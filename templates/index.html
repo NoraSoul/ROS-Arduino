@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<!--<meta http-equiv="refresh" content="5">-->
+<!--<script src="https://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>-->
+<script src="/roslibjs/build/roslib.js"></script>
+<script src="roslibjs/build/roslib.js"></script>
+
+<script>
+  // Connecting to ROS
+  // -----------------
+  var ros = new ROSLIB.Ros();
+
+  // If there is an error on the backend, an 'error' emit will be emitted.
+  ros.on('error', function(error) {
+    document.getElementById('connecting').style.display = 'none';
+    document.getElementById('connected').style.display = 'none';
+    document.getElementById('closed').style.display = 'none';
+    document.getElementById('error').style.display = 'inline';
+    console.log(error);
+  });
+
+  // Find out exactly when we made a connection.
+  ros.on('connection', function() {
+    console.log('Connection made!');
+    document.getElementById('connecting').style.display = 'none';
+    document.getElementById('error').style.display = 'none';
+    document.getElementById('closed').style.display = 'none';
+    document.getElementById('connected').style.display = 'inline';
+  });
+
+  ros.on('close', function() {
+    console.log('Connection closed.');
+    document.getElementById('connecting').style.display = 'none';
+    document.getElementById('connected').style.display = 'none';
+    document.getElementById('closed').style.display = 'inline';
+  });
+
+  // Create a connection to the rosbridge WebSocket server.
+  ros.connect('ws://localhost:9090');
+
+  // Publishing a Topic
+  // ------------------
+
+ 
+  var browserCommand = new ROSLIB.Topic({
+    ros : ros,
+    name : '/Browser_Command',
+    messageType : 'std_msgs/String'
+  });
+
+  
+  //var browser = document.getElementById("myText").value;
+
+  var browser_message = new ROSLIB.Message({
+    data:"dummy data"
+     
+   });
+
+  // And finally, publish.
+  //cmdVel.publish(twist);
+  
+
+  function myFunction() {
+    browser_message.data=document.getElementById("myText").value;
+    browserCommand.publish(browser_message);
+}
+
+
+
+
+  //Subscribing to a Topic
+  //----------------------
+
+  // Like when publishing a topic, we first create a Topic object with details of the topic's name
+  // and message type. Note that we can call publish or subscribe on the same topic object.
+  var listener = new ROSLIB.Topic({
+    ros : ros,
+    name : '/ultrasound_range',
+    messageType : 'sensor_msgs/Range'
+  });
+
+
+
+  // Then we add a callback to be called every time a message is published on this topic.
+  listener.subscribe(function(message) {
+    console.log('Received message on ' + listener.name + ': ' + message.range);
+
+
+    document.getElementById("display").innerHTML = "Temprature: "+message.min_range.toFixed(2);
+    document.getElementById("display2").innerHTML = "Humidity: "+message.max_range.toFixed(2);
+    document.getElementById("display3").innerHTML = "Distance: "+message.range.toFixed(2);
+
+          ////////// Displaying The Updated Results ///////////
+    
+    // If desired, we can unsubscribe from the topic as well.
+    //listener.unsubscribe();
+  });
+
+ 
+</script>
+</head>
+
+<body>
+    
+  <h1>Simple ROS/Flask Web-Server</h1>
+  <p>please Type something to be displayed remotely on the Arduino LCD (the first 16 characters will be displayed </p>
+  <input type="text" id="myText" value="test">
+  <button onclick="myFunction()">Send</button>
+
+  <!-- <ol>
+    <li><tt>roscore</tt></li>
+    <li><tt>rostopic pub /listener std_msgs/String "Hello, World"</tt></li>
+    <li><tt>rostopic echo /cmd_vel</tt></li>
+    <li><tt>rosrun rospy_tutorials add_two_ints_server</tt></li>
+    <li><tt>roslaunch rosbridge_server rosbridge_websocket.launch</tt></li>
+  </ol> -->
+  <div id="statusIndicator">
+    <p id="connecting">
+      Connecting to rosbridge...
+    </p>
+    <p id="connected" style="color:#00D600; display:none">
+      Connected
+    </p>
+    <p id="error" style="color:#FF0000; display:none">
+      Error in the backend!
+    </p>
+    <p id="closed" style="display:none">
+      Connection closed.
+    </p>
+    
+
+    </p>
+  </div>
+  <div id="display">
+    
+  </div>
+  <div id="display2"></div>
+  <div id="display3"></div>
+</body>
+</html>
